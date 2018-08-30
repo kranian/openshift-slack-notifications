@@ -82,6 +82,23 @@ func notifySlack(event *v1.Event) {
 	}
 }
 
+func watchNEvents(clientset *kubernetes.Clientset) {
+	startTime := time.Now()
+	log.Printf("Watching events after %v", startTime)
+
+	watcher, err := clientset.CoreV1().Events("").Watch(v1.ListOptions{FieldSelector: "type=Normal"})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for watchEvent := range watcher.ResultChan() {
+		event := watchEvent.Object.(*v1.Event)
+		if event.FirstTimestamp.Time.After(startTime) {
+			notifySlack(event)
+		}
+	}
+}
+
 func watchEvents(clientset *kubernetes.Clientset) {
 	startTime := time.Now()
 	log.Printf("Watching events after %v", startTime)
@@ -112,7 +129,7 @@ func main() {
 
 	go func() {
 		for {
-			watchEvents(clientset)
+			watchNEvents(clientset)
 			time.Sleep(5 * time.Second)
 		}
 	}()
