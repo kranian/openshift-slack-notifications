@@ -93,7 +93,7 @@ func watchNEvents(clientset *kubernetes.Clientset) {
 
 	for watchEvent := range watcher.ResultChan() {
 		event := watchEvent.Object.(*v1.Event)
-		isTrigger := event.Reason == "BuildStarted" || event.Reason == "BuildCancel" ||  event.Reason == "BuildCompleted" ||  strings.Index(resourceUrl(event),"deploy") > -1  
+		isTrigger := event.Reason == "BuildStarted" || event.Reason == "BuildCancel" ||  event.Reason == "BuildCompleted" ||  strings.Index(event.InvolvedObject.Name,"deploy") > -1
 		if event.FirstTimestamp.Time.After(startTime) && isTrigger {
 			notifySlack(event)
 		}
